@@ -2,7 +2,7 @@
 #include <Ethernet.h>
 #include <PusherClient.h>
 
-byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02 };
+byte mac[] = { 0x01, 0xAA, 0xBC, 0xCC, 0xDE, 0x13 };
 
 PusherClient client;
 
@@ -28,12 +28,13 @@ void setup() {
 
     Serial.println();
 
-    if(client.connect("d20fddb74c58823cd05d")) {
+    if (client.connect("d20fddb74c58823cd05d")) {
         client.bind("new_active_call", new_active_call);
         client.subscribe("presence-active-calls");
 
-        Serial.println("Subscribed to channel");
+        Serial.println("Subscribed to channel.");
     } else {
+        Serial.println("Failed to subscribe to channel.");
         while(1) {}
     }
 }
