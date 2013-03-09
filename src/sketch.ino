@@ -30,7 +30,7 @@ void setup() {
 
     if (client.connect("d20fddb74c58823cd05d")) {
         client.bind("new_active_call", new_active_call);
-        client.subscribe("presence-active-calls");
+        client.subscribe("active-calls");
 
         Serial.println("Subscribed to channel.");
     } else {
