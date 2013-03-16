@@ -2,17 +2,22 @@
 #include <Ethernet.h>
 #include <PusherClient.h>
 
-byte mac[] = { 0x01, 0xAA, 0xBC, 0xCC, 0xDE, 0x13 };
+const int MAX_FREQ = 1500;
+const int MIN_FREQ = 600;
+const int DELAY = 20;
+const int FREQ_SKIP = 15;
+
+byte mac[] = { 0x01, 0xAA, 0xBC, 0xCC, 0xDE, 0x1D };
 
 PusherClient client;
 int ledPin = 9;
 int buttonPin = 8;
-int buzzerPin = 7;
+int speakerPin = 6;
 
 void setup() {
     pinMode(ledPin, OUTPUT);
     pinMode(buttonPin, INPUT);
-    pinMode(buzzerPin, OUTPUT);
+    pinMode(speakerPin, OUTPUT);
 
     Serial.begin(9600);
 
@@ -20,15 +25,18 @@ void setup() {
         ; // wait for serial port to connect. Needed for Leonardo only
     }
 
+    Serial.println("Starting");
+
     // DHCP
-    if (Ethernet.begin(mac) == 0) {
+    /*if (Ethernet.begin(mac) == 0) {
         Serial.println("Failed to configure Ethernet using DHCP");
         return;
-    }
+    }*/
 
     // Static IP
-    //byte ip[] = { 10, 0, 1, 19 };
-    //Ethernet.begin(mac, ip);
+    byte ip[] = { 192, 168, 100, 30 };
+    byte dns[] = { 10, 0, 1, 1 };
+    Ethernet.begin(mac, ip);
 
     Serial.print("Assigned IP address: ");
 
@@ -69,9 +77,26 @@ void new_active_call(String data) {
 
 void sound_siren() {
     digitalWrite(ledPin, HIGH);
-    tone(buzzerPin, 294);
-    delay(1000);
+
+    int freq;
+    unsigned long siren_start_time = millis();
+
+    do
+    {
+        for (freq = MIN_FREQ; freq <= MAX_FREQ; freq += FREQ_SKIP)
+        {
+            tone(speakerPin, freq);
+            delay(DELAY);
+        }
+        for (freq = MAX_FREQ; freq >= MIN_FREQ; freq -= FREQ_SKIP)
+        {
+            tone(speakerPin, freq);
+            delay(DELAY);
+        }
+    } while (millis() - siren_start_time < 3000L);
+
+    noTone(speakerPin);
+
     digitalWrite(ledPin, LOW);
-    noTone(buzzerPin);
 }
 
