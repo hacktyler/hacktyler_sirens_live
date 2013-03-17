@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 import serial
+import sys
 import time
 
 import pusherclient
+
+DEVICES = ['/dev/tty.usbmodem1411', '/dev/tty.usbmodem.1421']   
 
 def new_active_call(data):
     print 'new_active_call'
@@ -14,7 +17,18 @@ def connection_established(data):
     channel = pusher.subscribe('active-calls')
     channel.bind('new_active_call', new_active_call)
 
-arduino = serial.Serial('/dev/tty.usbmodem1421', 9600)
+arduino = None
+
+for device in DEVICES:
+    try:
+        arduino = serial.Serial(device, 9600)
+        print 'Connected to device %s' % device
+        break
+    except:
+        continue
+else:
+    print 'Could not connect to Arduino!'
+    sys.exit()
 
 pusher = pusherclient.Pusher('d20fddb74c58823cd05d')
 pusher.connection.bind('pusher:connection_established', connection_established)
