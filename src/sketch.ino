@@ -10,6 +10,10 @@ int bluePin = 8;
 int buttonPin = 7;
 int speakerPin = 6;
 
+int freq;
+unsigned long siren_start_time;
+int buttonState;
+
 void setup() {
     pinMode(redPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
@@ -27,7 +31,7 @@ void setup() {
 
 void loop() {
     char controlByte = Serial.read();
-    int buttonState = digitalRead(buttonPin);
+    buttonState = digitalRead(buttonPin);
 
     if (controlByte == 'a') {
         Serial.println("Alert received");
@@ -41,8 +45,7 @@ void loop() {
 void sound_siren() {
     digitalWrite(redPin, HIGH);
 
-    int freq;
-    unsigned long siren_start_time = millis();
+    siren_start_time = millis();
 
     do
     {

@@ -6,7 +6,7 @@ import time
 
 import pusherclient
 
-DEVICES = ['/dev/tty.usbmodem1411', '/dev/tty.usbmodem.1421']   
+DEVICES = ['/dev/tty.usbmodem1411', '/dev/tty.usbmodem1421']   
 
 def new_active_call(data):
     print 'new_active_call'
