@@ -1,9 +1,16 @@
 #include <SPI.h>
 
-const int MAX_FREQ = 1500;
-const int MIN_FREQ = 600;
-const int DELAY = 20;
+#include <SimpleTimer.h>
+
+const int FREQ_MAX = 1500;
+const int FREQ_MIN = 600;
+const int FREQ_ASCENDING = 1;
+const int FREQ_DESCENDING = 2;
 const int FREQ_SKIP = 15;
+const int SOUNDS_DELAY = 20;
+const int LED_RED = 1;
+const int LED_BLUE = 2;
+const int LIGHTS_DELAY = 250;
 
 int redPin = 9;
 int bluePin = 8;
@@ -11,8 +18,14 @@ int buttonPin = 7;
 int speakerPin = 6;
 
 int freq;
-unsigned long siren_start_time;
+int freqState = FREQ_ASCENDING; 
 int buttonState;
+int ledState = 0;
+
+SimpleTimer timer;
+int lightsTimer;
+int soundsTimer;
+int sirensTimer;
 
 void setup() {
     pinMode(redPin, OUTPUT);
@@ -35,34 +48,71 @@ void loop() {
 
     if (controlByte == 'a') {
         Serial.println("Alert received");
-        sound_siren();
+        siren();
     } else if (buttonState == LOW) {
         Serial.println("Button pushed");
-        sound_siren();
+        siren();
+    }
+
+    timer.run();
+}
+
+void lights() {
+    if (ledState == LED_RED) {
+        digitalWrite(redPin, LOW);
+        digitalWrite(bluePin, HIGH);
+
+        ledState = LED_BLUE;
+    } else {
+        digitalWrite(redPin, HIGH);
+        digitalWrite(bluePin, LOW);
+
+        ledState = LED_RED;
     }
 }
 
-void sound_siren() {
-    digitalWrite(redPin, HIGH);
+void sounds() {
+    if (freqState == FREQ_ASCENDING) {
+        freq += FREQ_SKIP;
 
-    siren_start_time = millis();
+        if (freq > FREQ_MAX) {
+            freq = FREQ_MAX;
+            freqState = FREQ_DESCENDING;
+        }
+    } else {
+        freq -= FREQ_SKIP;
 
-    do
-    {
-        for (freq = MIN_FREQ; freq <= MAX_FREQ; freq += FREQ_SKIP)
-        {
-            tone(speakerPin, freq);
-            delay(DELAY);
+        if (freq < FREQ_MIN) {
+            freq = FREQ_MIN;
+            freqState = FREQ_ASCENDING;
         }
-        for (freq = MAX_FREQ; freq >= MIN_FREQ; freq -= FREQ_SKIP)
-        {
-            tone(speakerPin, freq);
-            delay(DELAY);
-        }
-    } while (millis() - siren_start_time < 3000L);
+    }
+
+    tone(speakerPin, freq);
+}
+
+void kill_siren() {
+    timer.disable(lightsTimer);
+    timer.deleteTimer(lightsTimer);  
+
+    timer.disable(soundsTimer);
+    timer.deleteTimer(soundsTimer); 
 
     noTone(speakerPin);
-
     digitalWrite(redPin, LOW);
+    digitalWrite(bluePin, LOW);
+}
+
+void siren() {
+    // Debounce
+    if (timer.isEnabled(sirensTimer)) {
+        return;
+    }
+
+    freq = FREQ_MIN;
+
+    lightsTimer = timer.setInterval(LIGHTS_DELAY, lights);
+    soundsTimer = timer.setInterval(SOUNDS_DELAY, sounds);
+    sirensTimer = timer.setTimeout(5000, kill_siren);
 }
 
